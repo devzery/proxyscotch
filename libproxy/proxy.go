@@ -361,13 +361,18 @@ func proxyHandler(response http.ResponseWriter, request *http.Request) {
 // / Converts http.Header to a map.
 // / Original Source: https://stackoverflow.com/a/37030039/2872279 (modified).
 func headerToArray(header http.Header) (res map[string]string) {
-	res = make(map[string]string)
+    res = make(map[string]string)
 
-	for name, values := range header {
-		for _, value := range values {
-			res[strings.ToLower(name)] = value
-		}
-	}
+    for name, values := range header {
+        // Special handling for Set-Cookie headers which must remain separate
+        if strings.ToLower(name) == "set-cookie" {
+            // Join multiple cookies with a special delimiter that can be parsed client-side
+            res[strings.ToLower(name)] = strings.Join(values, "\n\n\n")
+        } else {
+            // For other headers with multiple values, join with comma as per HTTP spec
+            res[strings.ToLower(name)] = strings.Join(values, ", ")
+        }
+    }
 
-	return res
+    return res
 }
